@@ -13,12 +13,11 @@ const Spinner = ({ show }: { show: Boolean }) => {
   )
 }
 
-const DocumentUpload = () => {
+const DocumentUpload = ({uploadedDocs, setUploadedDocs}: {uploadedDocs: String[], setUploadedDocs:  React.Dispatch<React.SetStateAction<String[]>>}) => {
   const [stagedFiles, stageFiles] = useState<File[]>([])
-  const [uploadedFiles, setUploadedFiles] = useState<String[]>([])
+  const [loading, setLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const [customStyles, setCustomStyles] = useState({})
-  console.log(stagedFiles)
 
   function addFiles(files: FileList) {
     for (const file of files) {
@@ -28,11 +27,13 @@ const DocumentUpload = () => {
 
   async function uploadToServer(files: File[]) {
     const fd = new FormData()
-    for(const file of files) {
+    for (const file of files) {
+      console.log(file)
       fd.append('files', file)
     }
     const url = `${import.meta.env.VITE_LLM_SERVER}/document`
     try {
+      setLoading(true)
       const response = await fetch(url, {
         credentials: 'include',
         method: 'POST',
@@ -41,9 +42,28 @@ const DocumentUpload = () => {
       const uploadResults: {
         documents: String[]
       } = await response.json()
-      setUploadedFiles(prev => prev.concat(uploadResults.documents))
+        setUploadedDocs(prev => prev.concat(uploadResults.documents))
       stageFiles([])
 
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function clearDocuments() {
+    const url = `${import.meta.env.VITE_LLM_SERVER}/document`
+    try {
+      const response = await fetch(url, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+      if (response.ok) {
+        setUploadedDocs([])
+        stageFiles([])
+      }
+      console.log(await response.text())
     } catch (err) {
       console.error(err)
     }
@@ -57,41 +77,55 @@ const DocumentUpload = () => {
   }, [stagedFiles])
 
   return (
-    <div className='document-upload' style={customStyles} onDragOver={(e) => {
-      e.stopPropagation();
-      e.preventDefault();
-
-      setCustomStyles({
-        border: "4px #B3FFFC solid"
-      })
-
-    }} onDragLeave={(e) => {
-      setCustomStyles({})
-    }}
-      onDrop={(e) => {
-        e.preventDefault()
-        setCustomStyles({})
-        addFiles(e.dataTransfer.files)
-      }}
-    >
-      <input onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) {
-          addFiles(e.target.files)
-        }
-      }} ref={inputRef} type="file" hidden={true} />
-      <button onClick={(e) => {
-        inputRef.current?.click()
-      }}>
-        Upload
-      </button>
-      <div>
-        {stagedFiles.map((file, i) => <div key={i}>{file.name}</div>)}
-        {uploadedFiles.map((filename, i) => <div style={{color: 'green'}} key={i}>{filename}</div>)}
+    <>
+      <div className='card'>
+        <h3 style={{ margin: '0.5rem' }}>Uploaded Documents:</h3>
+        <div>
+          {stagedFiles.map((file, i) => <div key={i}>{file.name}</div>)}
+          {uploadedDocs.map((filename, i) => <div style={{ color: 'green' }} key={i}>{filename}</div>)}
+        </div>
+        <div style={{textAlign: 'center'}}>
+          <Spinner show={loading} />
+        </div>
       </div>
-      <button onClick={() => setFiles([])}>
-        Clear Documents
-      </button>
-    </div>
+      <div className='document-upload' style={customStyles} onDragOver={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        setCustomStyles({
+          border: "4px #B3FFFC dotted"
+        })
+
+      }} onDragLeave={(e) => {
+        setCustomStyles({})
+      }}
+        onDrop={(e) => {
+          e.preventDefault()
+          setCustomStyles({})
+          addFiles(e.dataTransfer.files)
+        }}
+      >
+        <input accept='.pdf' onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          console.log(e)
+          if (e.target.files) {
+            addFiles(e.target.files)
+          }
+          e.target.value = ''
+        }} ref={inputRef} type="file" hidden={true} />
+        <button onClick={(e) => {
+          inputRef.current?.click()
+        }}>
+          Upload
+        </button>
+        <h5>Or drag and drop.</h5>
+
+
+        <button onClick={() => {
+          clearDocuments()
+        }}>
+          Clear Documents
+        </button>
+      </div>
+    </>
   )
 }
 
@@ -120,10 +154,22 @@ const Notification = ({ signal }: { signal: string }) => {
   )
 }
 
+const Chat = () => {
+  // return (
 
+  // )
+}
+
+type ServerResponse = {
+  exists: boolean
+  data: {
+    documents: String[],
+    conversation: String[]
+  }
+} 
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [uploadedDocs, setUploadedDocs] = useState<String[]>([])
   const [notificationSignal, sendNotificationSignal] = useState('')
 
   function handleError(err: unknown) {
@@ -157,18 +203,12 @@ function App() {
         credentials: 'include'
 
       })
-      const session: {
-        exists: boolean
-        data: any
-      } = await response.json()
-
-      console.log(session)
-
+      const session: ServerResponse = await response.json()
       if (session.exists) {
+        setUploadedDocs(session.data.documents)
       } else {
         createSession()
       }
-      //handle not session
     } catch (err) {
       handleError(err)
       console.error(err)
@@ -182,29 +222,21 @@ function App() {
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <Spinner show={false} />
-      <DocumentUpload />
       <Notification signal={notificationSignal} />
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <main>
+        <h1>Document-Chat</h1>
+        <div>
+          <a href="https://vitejs.dev" target="_blank">
+            <img src={viteLogo} className="logo" alt="Vite logo" />
+          </a>
+          <a href="https://react.dev" target="_blank">
+            <img src={reactLogo} className="logo react" alt="React logo" />
+          </a>
+        </div>
+        <div className='card'>
+          <DocumentUpload uploadedDocs={uploadedDocs} setUploadedDocs={setUploadedDocs}/>
+        </div>
+      </main>
     </>
   )
 }
