@@ -4,16 +4,16 @@ import viteLogo from '/vite.svg'
 import openaiLogo from '/openai-logomark.svg'
 import './App.css'
 
-const Spinner = ({ show }: { show: Boolean }) => {
+const Spinner = ({ show, spin = true }: { show: Boolean, spin: Boolean }) => {
   if (!show) return <></>
   return (
-    <div className='spinner'>
+    <div className={`spinner ${spin ? 'spin-animation' : ''}`}>
       <img src={openaiLogo} alt="OpenAI Logo" />
     </div>
   )
 }
 
-const DocumentUpload = ({uploadedDocs, setUploadedDocs}: {uploadedDocs: String[], setUploadedDocs:  React.Dispatch<React.SetStateAction<String[]>>}) => {
+const DocumentUpload = ({ uploadedDocs, setUploadedDocs }: { uploadedDocs: String[], setUploadedDocs: React.Dispatch<React.SetStateAction<String[]>> }) => {
   const [stagedFiles, stageFiles] = useState<File[]>([])
   const [loading, setLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -42,7 +42,7 @@ const DocumentUpload = ({uploadedDocs, setUploadedDocs}: {uploadedDocs: String[]
       const uploadResults: {
         documents: String[]
       } = await response.json()
-        setUploadedDocs(prev => prev.concat(uploadResults.documents))
+      setUploadedDocs(prev => prev.concat(uploadResults.documents))
       stageFiles([])
 
     } catch (err) {
@@ -78,15 +78,20 @@ const DocumentUpload = ({uploadedDocs, setUploadedDocs}: {uploadedDocs: String[]
 
   return (
     <>
-      <div className='card'>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div style={{ alignSelf: 'center' }}>
+          <Spinner show={true} spin={loading} />
+        </div>
+      </div>
+      <div className='card' >
+
         <h3 style={{ margin: '0.5rem' }}>Uploaded Documents:</h3>
         <div>
-          {stagedFiles.map((file, i) => <div key={i}>{file.name}</div>)}
           {uploadedDocs.map((filename, i) => <div style={{ color: 'green' }} key={i}>{filename}</div>)}
+          {stagedFiles.map((file, i) => <div key={i}>{file.name}</div>)}
+
         </div>
-        <div style={{textAlign: 'center'}}>
-          <Spinner show={loading} />
-        </div>
+
       </div>
       <div className='document-upload' style={customStyles} onDragOver={(e) => {
         e.stopPropagation();
@@ -155,9 +160,41 @@ const Notification = ({ signal }: { signal: string }) => {
 }
 
 const Chat = () => {
-  // return (
 
-  // )
+  const [awaitingResponse, setAwaitingResponse] = useState(false)
+  enum MessageTypes {
+    AIMessage,
+    HumanMessage
+  }
+
+  type ChatMessage = {
+    type: MessageTypes,
+    content: String
+  }
+
+  const Message = (message: ChatMessage) => {
+    return (
+      <div className={`message ${message.type}`}>
+
+      </div>
+    )
+  }
+  const ChatBox = ({ messages }: { messages: ChatMessage[] }) => {
+    return (
+      <div>
+
+      </div>
+    )
+  }
+
+  return (
+    <div className='chat'>
+      <input className='fancy-text-input' type="text" />
+      <button disabled={awaitingResponse}>
+        Ask
+      </button>
+    </div>
+  )
 }
 
 type ServerResponse = {
@@ -166,7 +203,7 @@ type ServerResponse = {
     documents: String[],
     conversation: String[]
   }
-} 
+}
 
 function App() {
   const [uploadedDocs, setUploadedDocs] = useState<String[]>([])
@@ -223,20 +260,27 @@ function App() {
   return (
     <>
       <Notification signal={notificationSignal} />
-      <main>
-        <h1>Document-Chat</h1>
+      <h1>Document-Chat</h1>
+
+      <main style={{ display: 'flex' }}>
         <div>
+          {/* <div>
           <a href="https://vitejs.dev" target="_blank">
             <img src={viteLogo} className="logo" alt="Vite logo" />
           </a>
           <a href="https://react.dev" target="_blank">
             <img src={reactLogo} className="logo react" alt="React logo" />
           </a>
+        </div> */}
+          <div className='card'>
+            <DocumentUpload uploadedDocs={uploadedDocs} setUploadedDocs={setUploadedDocs} />
+          </div>
         </div>
         <div className='card'>
-          <DocumentUpload uploadedDocs={uploadedDocs} setUploadedDocs={setUploadedDocs}/>
+          <Chat />
         </div>
       </main>
+
     </>
   )
 }

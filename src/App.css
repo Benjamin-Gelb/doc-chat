@@ -3,6 +3,7 @@
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+
 }
 
 .logo {
@@ -11,9 +12,11 @@
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
+
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
@@ -22,6 +25,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -55,12 +59,17 @@
 
 .spinner {
   place-content: center;
-  width: 40px;
-  height: 40px;
+  width: 96px;
+  height: 96px;
+  /* margin: 2rem; */
+
+}
+
+.spin-animation {
   animation-name: spin;
   animation-duration: 1500ms;
   animation-iteration-count: infinite;
-  animation-timing-function: linear; 
+  animation-timing-function: linear;
 }
 
 .document-upload {
@@ -84,10 +93,44 @@
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
-.notification > button {
+.notification>button {
   height: fit-content;
   margin-left: 0.5rem;
   margin-right: 0.5rem;
+}
+
+.chat {
+  display: flex;
+}
+
+.chat > button {
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+.message {
+  
+}
+
+.AIMessage {
+
+}
+
+/*bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500*/
+.fancy-text-input {
+  display: block;
+  padding: 0.625rem;
+  border-radius: 0.5rem;
+  border-width: 1px;
+  border-color: #D1D5DB;
+  width: 100%;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #111827;
+  background-color: #F9FAFB;
+  margin-right: 1rem;
+
+  width: 42rem
 }
 
 /* .document-upload:hover {
@@ -96,9 +139,10 @@
 
 @keyframes spin {
   from {
-      transform:rotate(0deg);
+    transform: rotate(0deg);
   }
+
   to {
-      transform:rotate(360deg);
+    transform: rotate(360deg);
   }
 }
