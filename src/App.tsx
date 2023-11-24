@@ -160,11 +160,9 @@ const Notification = ({ signal }: { signal: string }) => {
 }
 
 const Chat = () => {
-
-  const [awaitingResponse, setAwaitingResponse] = useState(false)
   enum MessageTypes {
-    AIMessage,
-    HumanMessage
+    AI = 'AIMessage',
+    HUMAN = 'HumanMessage'
   }
 
   type ChatMessage = {
@@ -172,27 +170,60 @@ const Chat = () => {
     content: String
   }
 
-  const Message = (message: ChatMessage) => {
-    return (
-      <div className={`message ${message.type}`}>
+  const [awaitingResponse, setAwaitingResponse] = useState(false)
 
+  const [message, setMessage] = useState('')
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const chatbox = useRef<HTMLDivElement>(null)
+
+  useEffect(()=> {
+    chatbox.current?.scrollTo({top: chatbox.current.scrollHeight, behavior: 'smooth'})
+  }, [messages])
+
+  const Message = ({ type, content }: { type: MessageTypes, content: String }) => {
+    return (
+      <div className={`message ${type}`}>
+        {content}
       </div>
     )
   }
+
   const ChatBox = ({ messages }: { messages: ChatMessage[] }) => {
     return (
-      <div>
-
+      <div ref={chatbox} className='chat-box scrollbar'>
+        {messages.map(message => <Message {...message} />)}
       </div>
     )
   }
 
+  // const messages: ChatMessage[] = [
+  //   {
+  //     type: MessageTypes.HUMAN,
+  //     content: 'Hi Im Benjamin.'
+  //   },
+  //   {
+  //     type: MessageTypes.AI,
+  //     content: 'Bet you like to goon, huh Ben?'
+  //   },
+  // ]
+
   return (
-    <div className='chat'>
-      <input className='fancy-text-input' type="text" />
-      <button disabled={awaitingResponse}>
-        Ask
-      </button>
+    <div className='chat '>
+      <div className='chat-input'>
+        <input className='fancy-text-input' type="text" value={message} onChange={(e) => {
+          setMessage(e.target.value)
+        }} />
+        <button disabled={awaitingResponse} onClick={(e) => {
+          setMessages(prev => prev.concat({
+            type: MessageTypes.HUMAN,
+            content: message
+          })
+          )
+        }}>
+          Ask
+        </button>
+      </div>
+      <ChatBox messages={messages} />
     </div>
   )
 }
@@ -261,7 +292,6 @@ function App() {
     <>
       <Notification signal={notificationSignal} />
       <h1>Document-Chat</h1>
-
       <main style={{ display: 'flex' }}>
         <div>
           {/* <div>
