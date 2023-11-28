@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { MouseEventHandler, memo, useEffect, useMemo, useRef, useState } from 'react'
 import openaiLogo from '/openai-logomark.svg'
 import './App.css'
 
@@ -32,6 +32,7 @@ const Spinner = ({ show, spin = true }: { show: Boolean, spin: Boolean }) => {
     </div>
   )
 }
+
 
 const DocumentUpload = ({ uploadedDocs, setUploadedDocs }: { uploadedDocs: String[], setUploadedDocs: React.Dispatch<React.SetStateAction<String[]>> }) => {
   const [stagedFiles, stageFiles] = useState<File[]>([])
@@ -207,21 +208,21 @@ const Chat = ({ sessionMessages }: { sessionMessages: ChatMessage[] }) => {
   }, [messages])
 
   const Message = ({ type, content }: { type: MessageTypes, content: String }) => {
-    console.log('render')
+    console.log('render');
+
     return (
       <div className={`message ${type}`}>
-        {content}
+        {content.split('\n').map(newline => <div>{newline}</div>)}
       </div>
     )
   }
 
-  const ChatBox = ({ messages }: { messages: ChatMessage[] }) => {
-    return (
-      <div ref={chatbox} className='chat-box scrollbar'>
-        {messages.map((message, i) => <Message key={i} {...message} />)}
-      </div>
-    )
-  }
+  const ChatBox = useMemo(() => (
+    <div ref={chatbox} className='chat-box scrollbar'>
+      {messages.map((message, i) => <Message key={i} {...message} />)}
+    </div>
+  ), [messages])
+
 
   const postMessage = async () => {
     if (message === '') return
@@ -250,8 +251,60 @@ const Chat = ({ sessionMessages }: { sessionMessages: ChatMessage[] }) => {
 
   }
 
+
+  const Preset = ({ title, content }: { title: String, content: string }) => {
+
+    const postMessageDirect = async (message: string) => {
+      if (message === '') return
+      setMessages(prev => prev.concat({
+        type: MessageTypes.HUMAN,
+        content: message
+      }))
+      setMessage('')
+      const url = `${import.meta.env.VITE_LLM_SERVER}/chat`
+
+      const response = await fetch(url, {
+        credentials: 'include',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          content: message
+        })
+      })
+      if (!response.ok) {
+        return
+      }
+      const aiMessage = await response.json()
+      setMessages(prev => prev.concat(aiMessage))
+
+    }
+
+    return (
+      <button className='preset' onClick={async () => {
+        postMessageDirect(content)
+      }}>
+        {title}
+      </button>
+    )
+  }
+
+  const presets = [
+    { title: "Plaintiff Position", content: "What is the plaintiff's position" },
+    { title: "Defendant Position", content: "What is the defendant's position?" },
+    { title: "Case Summary", content: "Give me a summary of the case." },
+    { title: "Party Demands", content: "What do the parties demand?" },
+    { title: "Case Participants ", content: "Who are the case Participants?" },
+
+  ]
+
+
   return (
     <div className='chat '>
+      <div>
+        {presets.map(preset => <Preset title={preset.title} content={preset.content} />)}
+      </div>
       <div className='chat-input'>
         <input className='fancy-text-input' type="text" value={message} onChange={(e) => {
           setMessage(e.target.value)
@@ -266,7 +319,7 @@ const Chat = ({ sessionMessages }: { sessionMessages: ChatMessage[] }) => {
           Ask
         </button>
       </div>
-      <ChatBox messages={messages} />
+      <>{ChatBox}</>
     </div>
   )
 }
@@ -299,11 +352,15 @@ function App() {
   function setVisitor(sessions: Session[]) {
     const sessionCookie = getCookie('session-cookie')
     if (!sessionCookie) {
-      //handle sessioncookie error
+      // Session-Cookie is missing from Application Cache
+      return registerVisitor()
+
     }
     const currentSession = sessions.filter(session => session.sessionCookie === sessionCookie)
     if (currentSession.length < 1) {
       //handle sessioncookie error
+      console.log('session cookie error');
+
     }
     setSession(currentSession[0])
   }
