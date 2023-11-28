@@ -1,8 +1,28 @@
 import { useEffect, useRef, useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import openaiLogo from '/openai-logomark.svg'
 import './App.css'
+
+function getCookie(name: String) {
+  var cookies = document.cookie;
+
+  var prefix = name + "=";
+  var start = cookies.indexOf("; " + prefix);
+
+  // If the cookie is at the start of the string
+  if (start == -1) {
+    start = cookies.indexOf(prefix);
+    if (start != 0) return null;
+  } else {
+    start += 2;
+  }
+
+  var end = cookies.indexOf(";", start);
+  if (end == -1) {
+    end = cookies.length;
+  }
+
+  return decodeURIComponent(cookies.substring(start + prefix.length, end));
+}
 
 const Spinner = ({ show, spin = true }: { show: Boolean, spin: Boolean }) => {
   if (!show) return <></>
@@ -159,28 +179,35 @@ const Notification = ({ signal }: { signal: string }) => {
   )
 }
 
-const Chat = () => {
-  enum MessageTypes {
-    AI = 'AIMessage',
-    HUMAN = 'HumanMessage'
-  }
+enum MessageTypes {
+  AI = 'AIMessage',
+  HUMAN = 'HumanMessage'
+}
 
-  type ChatMessage = {
-    type: MessageTypes,
-    content: String
-  }
+type ChatMessage = {
+  type: MessageTypes,
+  content: String
+}
+
+const Chat = ({ sessionMessages }: { sessionMessages: ChatMessage[] }) => {
 
   const [awaitingResponse, setAwaitingResponse] = useState(false)
 
   const [message, setMessage] = useState('')
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [messages, setMessages] = useState<ChatMessage[]>(sessionMessages)
   const chatbox = useRef<HTMLDivElement>(null)
 
-  useEffect(()=> {
-    chatbox.current?.scrollTo({top: chatbox.current.scrollHeight, behavior: 'smooth'})
+
+  useEffect(() => {
+    setMessages(sessionMessages)
+  }, [sessionMessages])
+
+  useEffect(() => {
+    chatbox.current?.scrollTo({ top: chatbox.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
 
   const Message = ({ type, content }: { type: MessageTypes, content: String }) => {
+    console.log('render')
     return (
       <div className={`message ${type}`}>
         {content}
@@ -191,34 +218,50 @@ const Chat = () => {
   const ChatBox = ({ messages }: { messages: ChatMessage[] }) => {
     return (
       <div ref={chatbox} className='chat-box scrollbar'>
-        {messages.map(message => <Message {...message} />)}
+        {messages.map((message, i) => <Message key={i} {...message} />)}
       </div>
     )
   }
 
-  // const messages: ChatMessage[] = [
-  //   {
-  //     type: MessageTypes.HUMAN,
-  //     content: 'Hi Im Benjamin.'
-  //   },
-  //   {
-  //     type: MessageTypes.AI,
-  //     content: 'Bet you like to goon, huh Ben?'
-  //   },
-  // ]
+  const postMessage = async () => {
+    if (message === '') return
+    setMessages(prev => prev.concat({
+      type: MessageTypes.HUMAN,
+      content: message
+    }))
+    setMessage('')
+    const url = `${import.meta.env.VITE_LLM_SERVER}/chat`
+
+    const response = await fetch(url, {
+      credentials: 'include',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        content: message
+      })
+    })
+    if (!response.ok) {
+      return
+    }
+    const aiMessage = await response.json()
+    setMessages(prev => prev.concat(aiMessage))
+
+  }
 
   return (
     <div className='chat '>
       <div className='chat-input'>
         <input className='fancy-text-input' type="text" value={message} onChange={(e) => {
           setMessage(e.target.value)
+        }} onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            postMessage()
+          }
         }} />
         <button disabled={awaitingResponse} onClick={(e) => {
-          setMessages(prev => prev.concat({
-            type: MessageTypes.HUMAN,
-            content: message
-          })
-          )
+          postMessage()
         }}>
           Ask
         </button>
@@ -230,19 +273,89 @@ const Chat = () => {
 
 type ServerResponse = {
   exists: boolean
-  data: {
+  sessions: [{
     documents: String[],
     conversation: String[]
-  }
+  }]
 }
 
 function App() {
   const [uploadedDocs, setUploadedDocs] = useState<String[]>([])
   const [notificationSignal, sendNotificationSignal] = useState('')
+  const [conversation, setConversation] = useState<ChatMessage[]>([])
+
+  type Session = { documents: String[], conversation: ChatMessage[], sessionCookie: String }
+
+  const [session, setSession] = useState<Session>({
+    documents: [],
+    conversation: [],
+    sessionCookie: ''
+  })
 
   function handleError(err: unknown) {
     sendNotificationSignal("There has been an error on the server, please try again.")
   }
+
+  function setVisitor(sessions: Session[]) {
+    const sessionCookie = getCookie('session-cookie')
+    if (!sessionCookie) {
+      //handle sessioncookie error
+    }
+    const currentSession = sessions.filter(session => session.sessionCookie === sessionCookie)
+    if (currentSession.length < 1) {
+      //handle sessioncookie error
+    }
+    setSession(currentSession[0])
+  }
+
+
+  async function getVisitor() {
+    const url = `${import.meta.env.VITE_LLM_SERVER}/visitor`
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        credentials: 'include'
+      })
+      if (!response.ok) {
+        //handle
+      }
+      const visitor: {
+        exists: Boolean
+        sessions: Session[]
+      } = await response.json();
+
+      if (!visitor.exists) {
+        registerVisitor()
+      } else {
+        setVisitor(visitor.sessions)
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  async function registerVisitor() {
+    const url = `${import.meta.env.VITE_LLM_SERVER}/visitor`
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        credentials: 'include'
+      })
+      if (!response.ok) {
+        //handle
+      }
+      const visitor: {
+        exists: Boolean
+        sessions: Session[]
+      } = await response.json();
+      setVisitor(visitor.sessions)
+
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+
 
   async function createSession() {
     const url = `${import.meta.env.VITE_LLM_SERVER}/session`
@@ -251,12 +364,10 @@ function App() {
         method: 'POST',
         credentials: 'include'
       })
-      console.log(response)
-      const session: {
-        exists: boolean
-        data: any
-      } = await response.json()
-      console.log(session)
+      const visitor: { sessions: Session[] } = await response.json()
+      console.log(visitor)
+      setVisitor(visitor.sessions)
+
       // Do something with the session
     } catch (err) {
       handleError(err)
@@ -271,9 +382,9 @@ function App() {
         credentials: 'include'
 
       })
-      const session: ServerResponse = await response.json()
-      if (session.exists) {
-        setUploadedDocs(session.data.documents)
+      const sessionData: ServerResponse = await response.json()
+      if (sessionData.exists) {
+        setUploadedDocs(sessionData.sessions[0].documents)
       } else {
         createSession()
       }
@@ -282,11 +393,18 @@ function App() {
       console.error(err)
       //notify user if issue present with server
     }
-
   }
+
+
   useEffect(() => {
-    getSession()
+    getVisitor()
   }, [])
+
+  useEffect(() => {
+    console.log(session)
+    setUploadedDocs(session.documents)
+    setConversation(session.conversation)
+  }, [session])
 
   return (
     <>
@@ -294,20 +412,19 @@ function App() {
       <h1>Document-Chat</h1>
       <main style={{ display: 'flex' }}>
         <div>
-          {/* <div>
-          <a href="https://vitejs.dev" target="_blank">
-            <img src={viteLogo} className="logo" alt="Vite logo" />
-          </a>
-          <a href="https://react.dev" target="_blank">
-            <img src={reactLogo} className="logo react" alt="React logo" />
-          </a>
-        </div> */}
+
           <div className='card'>
             <DocumentUpload uploadedDocs={uploadedDocs} setUploadedDocs={setUploadedDocs} />
           </div>
+          <div className='card'>
+            <button onClick={createSession}>
+              New Session
+            </button>
+          </div>
         </div>
+
         <div className='card'>
-          <Chat />
+          <Chat sessionMessages={session.conversation} />
         </div>
       </main>
 

@@ -37,6 +37,18 @@
   }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0)
+  }
+}
+
 .card {
   padding: 2em;
 }
@@ -102,6 +114,7 @@
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 999;
 }
+
 .notification>button {
   height: fit-content;
   margin-left: 0.5rem;
@@ -120,7 +133,7 @@
   display: flex;
 }
 
-.chat-input > button {
+.chat-input>button {
   padding-left: 2rem;
   padding-right: 2rem;
 }
@@ -131,7 +144,8 @@
   max-height: 28rem;
   overflow-y: scroll;
   background-color: #f3f3f3;
-  }
+
+}
 
 
 .message {
@@ -142,17 +156,25 @@
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
   border-radius: 1rem;
-  margin-right: 17px;
+  max-width: 50%;
+}
+
+.animate {
+  animation: fadeIn 1s ease-in-out;
 
 }
 
 .AIMessage {
   justify-self: start;
+  text-align: left;
+  margin-left: 17px;
 }
 
 .HumanMessage {
   background-color: #61C9A8;
   justify-self: end;
+  margin-right: 17px;
+
 }
 
 /*bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500*/
@@ -187,28 +209,32 @@
 }
 
 .scrollbar::-webkit-scrollbar {
-  background-color:#fff;
-  width:16px
+  background-color: #fff;
+  width: 16px
 }
 
 /* background of the scrollbar except button or resizer */
 .scrollbar::-webkit-scrollbar-track {
-  background-color:#fff
+  background-color: #fff
 }
+
 .scrollbar::-webkit-scrollbar-track:hover {
-  background-color:#f4f4f4
+  background-color: #f4f4f4
 }
 
 /* scrollbar itself */
 .scrollbar::-webkit-scrollbar-thumb {
-  background-color:#babac0;
-  border-radius:16px;
-  border:5px solid #fff
+  background-color: #babac0;
+  border-radius: 16px;
+  border: 5px solid #fff
 }
+
 .scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color:#a0a0a5;
-  border:4px solid #f4f4f4
+  background-color: #a0a0a5;
+  border: 4px solid #f4f4f4
 }
 
 /* set button(top and bottom of the scrollbar) */
-.scrollbar::-webkit-scrollbar-button {display:none}
+.scrollbar::-webkit-scrollbar-button {
+  display: none
+}
