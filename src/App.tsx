@@ -49,7 +49,6 @@ const DocumentUpload = ({ uploadedDocs, setUploadedDocs }: { uploadedDocs: Strin
   async function uploadToServer(files: File[]) {
     const fd = new FormData()
     for (const file of files) {
-      console.log(file)
       fd.append('files', file)
     }
     const url = `${import.meta.env.VITE_LLM_SERVER}/document`
@@ -131,7 +130,6 @@ const DocumentUpload = ({ uploadedDocs, setUploadedDocs }: { uploadedDocs: Strin
         }}
       >
         <input accept='.pdf' onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-          console.log(e)
           if (e.target.files) {
             addFiles(e.target.files)
           }
@@ -190,29 +188,31 @@ type ChatMessage = {
   content: String
 }
 
+function dotDotDot(text: String) {
+  if (text.length > 3) {
+    return "."
+  }
+  return text.concat(".")
+}
+
 const Chat = ({ sessionMessages }: { sessionMessages: ChatMessage[] }) => {
 
   const [awaitingResponse, setAwaitingResponse] = useState(false)
 
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<ChatMessage[]>(sessionMessages)
+  const [pending, setPending] = useState('...')
   const chatbox = useRef<HTMLDivElement>(null)
-
-
-  useEffect(() => {
-    setMessages(sessionMessages)
-  }, [sessionMessages])
 
   useEffect(() => {
     chatbox.current?.scrollTo({ top: chatbox.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
 
   const Message = ({ type, content }: { type: MessageTypes, content: String }) => {
-    console.log('render');
 
     return (
       <div className={`message ${type}`}>
-        {content.split('\n').map(newline => <div>{newline}</div>)}
+        {content.split('\n').map((newline, i) => <div key={i}>{newline}</div>)}
       </div>
     )
   }
@@ -220,6 +220,10 @@ const Chat = ({ sessionMessages }: { sessionMessages: ChatMessage[] }) => {
   const ChatBox = useMemo(() => (
     <div ref={chatbox} className='chat-box scrollbar'>
       {messages.map((message, i) => <Message key={i} {...message} />)}
+      {awaitingResponse ? <div className='message AIMessage dot'>
+        <div className='dot-flashing'>
+        </div>
+      </div> : <></>}
     </div>
   ), [messages])
 
@@ -233,6 +237,7 @@ const Chat = ({ sessionMessages }: { sessionMessages: ChatMessage[] }) => {
     setMessage('')
     const url = `${import.meta.env.VITE_LLM_SERVER}/chat`
 
+    setAwaitingResponse(true)
     const response = await fetch(url, {
       credentials: 'include',
       method: 'POST',
@@ -247,43 +252,59 @@ const Chat = ({ sessionMessages }: { sessionMessages: ChatMessage[] }) => {
       return
     }
     const aiMessage = await response.json()
+    setAwaitingResponse(false)
     setMessages(prev => prev.concat(aiMessage))
 
   }
 
+  /** TEST FEATURE */
+
+  const streamMessage = async () => {
+    const url = `${import.meta.env.VITE_LLM_SERVER}/stream`
+    const response = await fetch(url, {
+      credentials: 'include',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        content: message
+      })
+    })
+    if (!response.ok) {
+      return
+    }
+    if (response.body) {
+      const reader = response.body.getReader();
+      function processStream(): any {
+        return reader.read().then(({ done, value }) => {
+          if (done) {
+            // The stream has ended
+            console.log('Stream has ended');
+            return;
+          }
+
+          // Process the data (value) here
+          console.log('Received data:', value);
+
+          // Continue reading the stream
+          return processStream();
+        });
+      }
+
+      return processStream();
+    }
+  }
+
+  /** TEST FEATURE */
+
 
   const Preset = ({ title, content }: { title: String, content: string }) => {
 
-    const postMessageDirect = async (message: string) => {
-      if (message === '') return
-      setMessages(prev => prev.concat({
-        type: MessageTypes.HUMAN,
-        content: message
-      }))
-      setMessage('')
-      const url = `${import.meta.env.VITE_LLM_SERVER}/chat`
-
-      const response = await fetch(url, {
-        credentials: 'include',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          content: message
-        })
-      })
-      if (!response.ok) {
-        return
-      }
-      const aiMessage = await response.json()
-      setMessages(prev => prev.concat(aiMessage))
-
-    }
 
     return (
-      <button className='preset' onClick={async () => {
-        postMessageDirect(content)
+      <button className='preset' onClick={() => {        
+        setMessage(content)
       }}>
         {title}
       </button>
@@ -303,7 +324,7 @@ const Chat = ({ sessionMessages }: { sessionMessages: ChatMessage[] }) => {
   return (
     <div className='chat '>
       <div>
-        {presets.map(preset => <Preset title={preset.title} content={preset.content} />)}
+        {presets.map((preset, i) => <Preset title={preset.title} content={preset.content} key={i} />)}
       </div>
       <div className='chat-input'>
         <input className='fancy-text-input' type="text" value={message} onChange={(e) => {
@@ -315,6 +336,7 @@ const Chat = ({ sessionMessages }: { sessionMessages: ChatMessage[] }) => {
         }} />
         <button disabled={awaitingResponse} onClick={(e) => {
           postMessage()
+          streamMessage()
         }}>
           Ask
         </button>
@@ -422,7 +444,6 @@ function App() {
         credentials: 'include'
       })
       const visitor: { sessions: Session[] } = await response.json()
-      console.log(visitor)
       setVisitor(visitor.sessions)
 
       // Do something with the session
@@ -458,7 +479,6 @@ function App() {
   }, [])
 
   useEffect(() => {
-    console.log(session)
     setUploadedDocs(session.documents)
     setConversation(session.conversation)
   }, [session])
@@ -481,7 +501,7 @@ function App() {
         </div>
 
         <div className='card'>
-          <Chat sessionMessages={session.conversation} />
+          <Chat sessionMessages={conversation} />
         </div>
       </main>
 

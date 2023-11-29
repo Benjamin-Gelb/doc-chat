@@ -122,11 +122,12 @@
 }
 
 .chat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   padding: 2rem;
   border-radius: 1rem;
-
-
 }
 
 .chat-input {
@@ -142,11 +143,57 @@
   display: grid;
   margin-top: 2rem;
   max-height: 28rem;
+  max-width: 48rem;
   overflow-y: scroll;
   background-color: #f3f3f3;
 
 }
 
+.dot-flashing {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+  background-color: #292929;
+  color: #282828;
+  animation: dot-flashing 1s infinite linear alternate;
+  animation-delay: 0.5s;
+}
+.dot-flashing::before, .dot-flashing::after {
+  content: "";
+  display: inline-block;
+  position: absolute;
+  top: 0;
+}
+.dot-flashing::before {
+  left: -15px;
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+  background-color: #454545;
+  color: rgb(28, 28, 28);
+  animation: dot-flashing 1s infinite alternate;
+  animation-delay: 0s;
+}
+.dot-flashing::after {
+  left: 15px;
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+  background-color: #262627;
+  color: #2f2f2f;
+  animation: dot-flashing 1s infinite alternate;
+  animation-delay: 1s;
+}
+
+@keyframes dot-flashing {
+  0% {
+    background-color: #454545;
+  }
+  50%, 100% {
+    background-color: rgba(24, 24, 24, 0.2);
+  }
+}
 
 .message {
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -175,6 +222,13 @@
   justify-self: end;
   margin-right: 17px;
 
+}
+
+.dot {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem
 }
 
 /*bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500*/
