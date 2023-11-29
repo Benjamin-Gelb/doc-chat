@@ -82,47 +82,6 @@ const Chat = ({ sessionMessages }: { sessionMessages: ChatMessage[], }) => {
 
     }
 
-    /** TEST FEATURE */
-
-    const streamMessage = async () => {
-        const url = `${import.meta.env.VITE_LLM_SERVER}/stream`
-        const response = await fetch(url, {
-            credentials: 'include',
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                content: message
-            })
-        })
-        if (!response.ok) {
-            return
-        }
-        if (response.body) {
-            const reader = response.body.getReader();
-            function processStream(): any {
-                return reader.read().then(({ done, value }) => {
-                    if (done) {
-                        // The stream has ended
-                        console.log('Stream has ended');
-                        return;
-                    }
-
-                    // Process the data (value) here
-                    console.log('Received data:', value);
-
-                    // Continue reading the stream
-                    return processStream();
-                });
-            }
-
-            return processStream();
-        }
-    }
-
-    /** TEST FEATURE */
-
 
     const Preset = ({ title, content }: { title: String, content: string }) => {
         return (
@@ -158,7 +117,6 @@ const Chat = ({ sessionMessages }: { sessionMessages: ChatMessage[], }) => {
                 }} />
                 <button disabled={awaitingResponse} onClick={(e) => {
                     postMessage()
-                    streamMessage()
                 }}>
                     Ask
                 </button>
