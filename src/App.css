@@ -143,6 +143,7 @@
   display: grid;
   margin-top: 2rem;
   max-height: 28rem;
+  width: 48rem;
   max-width: 48rem;
   overflow-y: scroll;
   background-color: #f3f3f3;
