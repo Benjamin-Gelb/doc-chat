@@ -195,7 +195,7 @@ function App() {
           </div>
         </div>
 
-        <div className='card'>
+        <div >
           <Chat sessionMessages={conversation} />
         </div>
       </main>

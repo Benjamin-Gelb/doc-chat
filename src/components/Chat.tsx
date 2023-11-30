@@ -21,7 +21,8 @@ function dotDotDot(text: String) {
 
 const Chat = ({ sessionMessages }: { sessionMessages: ChatMessage[], }) => {
 
-    const [prematureMessage, setPrematureMessage] = useState(<></>)
+    const { documents } = consumeContext()
+
 
     const [awaitingResponse, setAwaitingResponse] = useState(false)
     const [message, setMessage] = useState('')
@@ -55,15 +56,17 @@ const Chat = ({ sessionMessages }: { sessionMessages: ChatMessage[], }) => {
         </div>
     ), [messages])
 
+    const [showDocMessage, setShowDocMessage] = useState(false)
+
 
     const postMessage = async () => {
         if (message === '') return
 
-        const { documents } = consumeContext()
-
         if (documents.length === 0) {
-            return setPrematureMessage(<>You can't chat until you've uploaded a document!</>)
+            setShowDocMessage(true)
+            return
         }
+
 
         setMessages(prev => prev.concat({
             type: MessageTypes.HUMAN,
@@ -89,6 +92,37 @@ const Chat = ({ sessionMessages }: { sessionMessages: ChatMessage[], }) => {
         const aiMessage = await response.json()
         setAwaitingResponse(false)
         setMessages(prev => prev.concat(aiMessage))
+
+    }
+
+
+    const DocMessage = () => {
+
+        useEffect(() => {
+            if (showDocMessage) {
+                setTimeout(() => {
+                    setShowDocMessage(false)
+                }, 3000);
+            }
+            // return () => {
+            //     if (show) {
+            //         setShow(false)
+            //     }
+            // }
+        }, [showDocMessage])
+
+
+        if (!showDocMessage) {
+            return <></>
+        }
+
+        return (
+            <div className="doc-message-wrapper">
+            <div className='doc-message'>
+                You can't chat until you've uploaded some documents.
+            </div>
+            </div>
+        )
 
     }
 
@@ -131,7 +165,7 @@ const Chat = ({ sessionMessages }: { sessionMessages: ChatMessage[], }) => {
                     Ask
                 </button>
             </div>
-            <>{prematureMessage}</>
+            <DocMessage />
             <>{ChatBox}</>
         </div>
     )

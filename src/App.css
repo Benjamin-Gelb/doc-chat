@@ -145,9 +145,29 @@
   max-height: 28rem;
   width: 48rem;
   max-width: 48rem;
+  border-radius: 0.5rem;
   overflow-y: scroll;
   background-color: #f3f3f3;
+  transition: all 1s ease-in-out;
+  animation: fadeIn 1s ease-in-out
 
+}
+
+.doc-message-wrapper {
+  position: relative;
+  margin-top: 0.25rem;
+  align-self: flex-start;
+  width: 100%;
+
+
+}
+
+.doc-message {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: red;
+  animation: fadeIn 0.5s ease-in-out;
 }
 
 .dot-flashing {
