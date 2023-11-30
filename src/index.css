@@ -66,3 +66,19 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-header img {
+  width: 280px;
+  align-self: flex-start;
+}
+
+.page-header span {
+  align-self: center;
+}
+
