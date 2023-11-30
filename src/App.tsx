@@ -171,9 +171,9 @@ function App() {
   return (
     <>
       <Notification signal={notificationSignal} />
-      <h1 style={{display:'flex', alignItems: 'center', justifyContent: 'center'}}>
-        <img src={jwlogo} alt="JW Logo" style={{width: '280px', alignSelf: 'flex-start'}} /> 
-        <span style={{alignSelf: 'center'}}>&nbsp; Judicate West Legal Talk</span>
+      <h1 className='page-header'>
+        <img src={jwlogo} alt="JW Logo" /> 
+        <span>&nbsp; Judicate West Legal Talk</span>
       </h1>
       <main style={{ display: 'flex' }}>
         <div>
