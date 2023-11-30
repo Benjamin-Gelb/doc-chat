@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import './App.css'
+import jwlogo from '/jw-logo.svg'
 
 function getCookie(name: String) {
   var cookies = document.cookie;
@@ -170,7 +171,10 @@ function App() {
   return (
     <>
       <Notification signal={notificationSignal} />
-      <h1>Judicate West Legal Talk</h1>
+      <h1 className='page-header'>
+        <img src={jwlogo} alt="JW Logo" /> 
+        <span>&nbsp; Judicate West Legal Talk</span>
+      </h1>
       <main style={{ display: 'flex' }}>
         <div>
 
