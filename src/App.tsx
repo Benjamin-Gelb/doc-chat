@@ -170,7 +170,7 @@ function App() {
   return (
     <>
       <Notification signal={notificationSignal} />
-      <h1>Document-Chat</h1>
+      <h1>Judicate West Legal Talk</h1>
       <main style={{ display: 'flex' }}>
         <div>
 
