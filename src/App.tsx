@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { consumeContext } from './Context';
 import './App.css'
 
 function getCookie(name: String) {
@@ -42,6 +43,12 @@ function App() {
   const [uploadedDocs, setUploadedDocs] = useState<String[]>([])
   const [notificationSignal, sendNotificationSignal] = useState('')
   const [conversation, setConversation] = useState<ChatMessage[]>([])
+
+  const {setDocuments} = consumeContext()
+  
+  useEffect(()=> {
+    setDocuments(uploadedDocs)
+  }, [uploadedDocs])
 
   type Session = { documents: String[], conversation: ChatMessage[], sessionCookie: String }
 

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react"
+import { consumeContext } from "../Context"
 
 export enum MessageTypes {
     AI = 'AIMessage',
@@ -19,6 +20,8 @@ function dotDotDot(text: String) {
 }
 
 const Chat = ({ sessionMessages }: { sessionMessages: ChatMessage[], }) => {
+
+    const [prematureMessage, setPrematureMessage] = useState(<></>)
 
     const [awaitingResponse, setAwaitingResponse] = useState(false)
     const [message, setMessage] = useState('')
@@ -55,6 +58,13 @@ const Chat = ({ sessionMessages }: { sessionMessages: ChatMessage[], }) => {
 
     const postMessage = async () => {
         if (message === '') return
+
+        const { documents } = consumeContext()
+
+        if (documents.length === 0) {
+            return setPrematureMessage(<>You can't chat until you've uploaded a document!</>)
+        }
+
         setMessages(prev => prev.concat({
             type: MessageTypes.HUMAN,
             content: message
@@ -121,6 +131,7 @@ const Chat = ({ sessionMessages }: { sessionMessages: ChatMessage[], }) => {
                     Ask
                 </button>
             </div>
+            <>{prematureMessage}</>
             <>{ChatBox}</>
         </div>
     )
