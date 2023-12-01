@@ -97,8 +97,8 @@ const Chat = ({ sessionMessages }: { sessionMessages: ChatMessage[], }) => {
         { title: "Plaintiff Position", content: "What is the plaintiff's position" },
         { title: "Defendant Position", content: "What is the defendant's position?" },
         { title: "Case Summary", content: "Give me a summary of the case." },
-        { title: "Party Demands", content: "What do the parties demand?" },
-        { title: "Case Participants ", content: "Who are the case Participants?" },
+        { title: "Demands & Negotiations", content: "What has been demanded? What has been offered? What is the state of any current negotiations?" },
+        { title: "Case Participants ", content: "Who are the case Participants? Respond with a bulleted list." },
     ]
 
 

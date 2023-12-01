@@ -173,7 +173,7 @@ function App() {
       <Notification signal={notificationSignal} />
       <h1 className='page-header'>
         <img src={jwlogo} alt="JW Logo" /> 
-        <span>&nbsp; Judicate West Legal Talk</span>
+        <span>&nbsp; Brief AI Demo</span>
       </h1>
       <main style={{ display: 'flex' }}>
         <div>
